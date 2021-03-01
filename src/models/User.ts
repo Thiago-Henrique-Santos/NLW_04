@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, PrimaryColumn } from "typeorm"; //Importando o necessário do TypeORM para as nossas anotações
-import { v4 as uuid} from 'uuid';
+import { v4 as uuid } from 'uuid'; //importando a biblioteca da versão 4 do uuid
 
 @Entity("users")
 class User {

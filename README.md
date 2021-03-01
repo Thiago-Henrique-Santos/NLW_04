@@ -67,6 +67,9 @@ TS é JS de forma melhorada.
     * **controllers** = controlador, onde ficará cada função do nosso server, execuções e regras de negócio. Então o `server.ts` ficarão responsáveis apenas por chamar o que for necessário, dentro do controlador.
     * **database** = todos os arquivos relacionados ao banco de dados.
     * **models** = todos as classes modelos com o mapeamento para banco de dados (as classes virarão entidades/tabelas, atributos virarão atributos/colunas, e assim por diante).
+    * **repositories** = todos os nossos repositório, utilizados para acesso ao banco de dados, estão guardados nessa pasta.
+        *Todos os repositórios são classes.
+    * **__tests__** = todos os arquivos de testes
 
 # COMANDOS TERMINAL
 `yarn init -y`
@@ -106,8 +109,6 @@ yarn add typescript -D
 * Instalando os tipos do UUID
     * Uma biblioteca que ficará responsável de criar os tipos de IDs.
 
-
-
 ## Comando para rodar as partes da aplicação
 Esses comandos são baseados nos atributos de uma classe `script`, que precisamos criar no `package.json`.
 O nome dos atributos pode-se escolher à vontade, pois quando você rodar o atributo, ele rodará o arquivo que você definiu para esse atributo (o caminho de arquivo na frente dos ":", na frente do atributo, ex: `nomeDoAtributo: caminhoDoArquivo`).
@@ -122,15 +123,47 @@ O nome dos atributos pode-se escolher à vontade, pois quando você rodar o atri
 
 ## Comandos Migrations
 
-`yarn typeorm migration:create -n CreateUsers`
-* Cria a migration CreateUsers
-    * [Diagrama do nosso banco de dados em uma imagem "DiagramaBD"]
+`yarn typeorm migration:create -n NomeParaAMigration`
+* Cria uma migration
 
 `yarn typeorm migration:run`
 * Roda todas as migrations
 
 `yarn typeorm migration:revert`
 * Da um rowback, desfaz a última migration rodada
+
+## Comandos para a criação de nossos testes automatizado
+
+`yarn add jest '@types/jest' -D`
+* Instalando dependencias jest, que vamos utilizar para fazer nossos testes.
+
+`yarn jest --init`
+* Cria arquivo de configuração do jest
+    * Perguntas para a criação do arquivo:
+        * Se queremos definir um script de "teste" no package.json
+        R: Sim
+        * Utilizar TypeScript
+        R: Sim
+        * Qual ambiente queremos utilizar
+        R: node
+        * Se queremos usar report coverage do Jest.
+            * Mostra partes que ainda não foram cobridas com o teste, o que podemos melhorar no projeto e muitas outras ajuda.
+        R: Não. Não irmeos utilizar, por enquanto.
+        * Qual provedor do coverage iremos utilizar.
+        R: v8
+        * Limpar automaticamente mock calls e instancias entre todos os teste.
+        R: Sim
+
+`yarn add ts-jest -D`
+* Biblioteca para os testes
+    * Preset para trabalhar com TS dentro dos testes.
+
+`yarn test`
+* Rodar o teste escrito em um arquivo .test.ts
+    * Se retornar verde é que passou
+
+`yarn add supertest '@type/supertest' -D`
+* Instalando a ferramente supertest, que auxilia o jest em testes de integração
 
 # AJUDAS PELO POWERSHELL
 `Set-ExecutionPolicy Unrestricted`
@@ -165,19 +198,24 @@ Na maioria das vezes, as bibliotecas que estamos utilizando terão suas tipagens
     * Embora estejamos trabalhando com o express, toda tipagem dele está em uma outra biblioteca.
         * Assim precisamos baixar essa outra biblioteca para termos acesso às funções dele
 
-# MODIFICAÇÕES no package.json
-Adicionar:
+# scripts de package.json
 ```json
 "scripts": {
-    "dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/server.ts"
+    "dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/server.ts", /* Define como rodará o projeto, em nível de produção */
+    "typeorm": "ts-node-dev node_modules/typeorm/cli.js", /*Define coisas do TypeORM, como definidno o caminho da CLI (Command Line Interface), uma interface de linha de comando, a CLI, em nosso projeto, está sendo criada para que seja possível executar linhas de comando para gerar e executar migrations.*/
+    "test": "set NODE_ENV=test jest" /* A variável NODE_ENV vai enviar que está utilizando um ambiente de teste, ao rodar um uarn test, para,então, utilizar o banco de dados de teste e não atrapalhar o de produção*/ //"set" só coloca se o SO for Widnows
 },
 ```
-* Isso faz com que a todo tempo, o nosso typescript já seja compilado em JS automaticamente.
+**dev**
+* Faz com que a todo tempo, o nosso typescript já seja compilado em JS automaticamente.
 * A linha dentro de "scripts" é "nome do atributo": "extensão que instalamos --regrasErestrições local do arquivo"
     * O nome do atributo pode ser qualquer um.
     * Instalamos a extensão ts-node-dev, então colocamos ela lá.
     * Restringimos para não ficar fazendo checkagens de erros e apenas compile, e ignorar módulos node que estajam sendo rodados
         * Isso faz com que rod direto, tudo, automaticamente, sendo convertido em JS automaticamente e compilando.
+
+**typeorm**
+
 
 # SERVIÇOS DE ROTAS
 ## server.ts
@@ -205,20 +243,28 @@ app.post("/", (request, response) => {
 });
 ```
 
-* Código atual completo, sem imortações e o método listen para definir onde ser o servidor:
+* Código antigo, vs. 2 (veio depois do antigo, acima, mas não é atual), sem imortações e o método listen para definir onde ser o servidor:
+    * Este código passou para o app.ts, que serve para nossos testes. E o servidor funcionará de uma maneira diferente.
 
 ```ts
 app.use(express.json()); //Habilitando no express, que nossa aplicação aceite requests em json
 app.use(router); //Usando o router do routes.ts
 ```
 
-* Importações
+* Importações (server.ts)
+```ts
+import { app } from "./app";
+```
+
+ * Importações (app.ts)
 ```ts
 import "reflect-metadata"; //Biblioteca reflect-metadata para utilizar o TypeORM
 import express, { request, response } from 'express'; //faznedo uma importação com nome de express, importando request e response do framework express, para fazermos as requisições e respostas das rotas
 import "./database"; //index.ts da pasta database
 import { router } from "./routes"; //constante router, que utiliza Router (métodos de rotas) do express, de routes.ts
 ```
+
+* Código atual completo, sem imortações e o método listen para definir onde ser o servidor:
 
 * Outros
 
@@ -263,6 +309,8 @@ Como toda rota, o nosso Controller também precisa de uma requisição e uma res
 
 # BANCO DE DADOS
 
+[Diagrama do nosso banco de dados em uma imagem "DiagramaBD"]
+
 Há três formas de inserir um banco de dados na aplicação. Mas o resultado final é sempre a mesma coisa.
 * 1 forma: utilizando um driver do banco de dados (MySQL, MariaDB, etc);
     * Se optar por essa forma, além de ter que instalar, será necessário ver a documentação do driver.
@@ -293,13 +341,13 @@ Criamos uma pasta "database" para colocar um `arquivo.sqlite`, para que o ORM po
 Dentro, apenas, da pasta API, colocamos um `ormconfig.json` para inserir as configurações para o Type ORM
 ```json
 {
-    "type": "sqlite", //driver do BD
-    "database": "./src/database/database.sqlite", //local do arquivo com a extensão do driver
-    "migrations": ["./src/database/migrations/**.ts"], //defindo arquivos de migrations, ou seja, todo arquivo do tipo migration que estiver com .ts, ele vai rodar
-    "entities": ["./src/models/**.ts"], //definindo onde estão os modelos das entidades
-    "logging": true, //após fazer um cadastro, gera um log, no terminal node, de todo o SQL que está sendo gerado
+    "type": "sqlite", /*driver do BD*/
+    "database": "./src/database/database.sqlite", /*local do arquivo com a extensão do driver*/
+    "migrations": ["./src/database/migrations/**.ts"], /*defindo arquivos de migrations, ou seja, todo arquivo do tipo migration que estiver com .ts, ele vai rodar*/
+    "entities": ["./src/models/**.ts"], /*definindo onde estão os modelos das entidades*/
+    "logging": true, /*após fazer um cadastro, gera um log, no terminal node, de todo o SQL que está sendo gerado*/
     "cli": {
-        "migrationsDir": "./src/database/migrations" //local onde estamos guardando nossas migrations
+        "migrationsDir": "./src/database/migrations" /*local onde estamos guardando nossas migrations*/
     }
 }
 ```
@@ -314,6 +362,8 @@ createconnection();
 ```
 * Cria a conexão com o banco de dados.
     * É a conexão mais básica, que foi criada, mas para nosso projeto, ela já é o suficiente.
+```ts
+```
 
 No arquivo do servidor `server.ts`
 ```ts
@@ -358,6 +408,21 @@ const nomeParaOObjeto = repositorio.create({
 })
 ```
 
+### Refatoração do Controller na aula 3
+Criar repositório para usuário.
+* Por que isolar o repositório?
+    * 1 motivo: Hoje a responsabilidade por fazer acesso ao banco de dados, por mais que estejamos utilizando o getRepository, a responsabilidade está sendo do Controller. Mas o correto é que o repositório tenha essa responsabilidade.
+        * Não é bom que o controller tenha acesso ao que não é da responsabilidade dele (no, não é da responsabilidade dele o acesso ao banco de dados, pois isso quem cuida é o repositório).
+        * Sobre o método getRepository TypeORM: reconhece e pega a entidade e a qual repositório ela pertence, fazendo o mapeamento para uma tabela.
+    * 2 motivo: Quando temos um repositório isolado, nós conseguimos customizar nossas próprias funções.
+        *Apesar que o TypeORM já dá algumas, com o repositório conseguimos criar as nossas próprias, que mais se adequam ao nosso projeto.
+
+### Responsabilidades da classes de repositórios
+* Ter acesso a todos os métodos que o repositório do TypeORM oferece.
+    * Para isso, a classe vai ter como herança (extends de Programação Orientada a Objetos, que estamos utilizando) a classe Repository do TypeORM.
+        * Herança permite que nossa classe tenha todos os métodos da classe de que está pegando a herança.
+        * Em nosso caso, como a classe Repository é de acesso a banco de dados, após colocar o nome dela no extends, colocamos o nome da classe modelo da entidade entre sinal de maior e menor.
+
 ## Regras de negócios
 
 * Não pode cadastrar duas contas com o mesmo e-mail.
@@ -373,6 +438,37 @@ if(userAlreadyExists) {
 }
 ```
 -Código em UserController.ts
+
+# Testes automatizados
+## Tipos
+* Testes unitários
+    * Testes de cada função isolada.
+    * São feitos no TDD, que é o desenvolvimento orientado a testes.
+        * Criamos repositórios fakes, muitas vezes sem acesso a banco de dados, e utilizando dados fakes.
+    * Depois do desenvolvimento TDD, quando tudo vai dando certo, vai passando para o desenvolvimento de produção.
+* Teste de integração
+    * Teste da função da nossa aplicação, por completa.
+        *Ex, em nossa aplicação:
+        Testamos as rotas, para ver se está tudo ok:
+            * Nossa request
+            -> routes -> controller -> repository
+            * Nossa response
+            <- routes <- controller <- repository
+    * **Este teste é o que iremos aprender na NLW.**
+* Teste de Ponta-a-Ponta (E2E)
+    * Teste de toda ação que o usuário possa fazer.
+        * É mais comum em teste de front-end.
+
+No back-end focamos mais nos testes unitários e de integração.
+
+* Na NLW iremos criar nossos teste. Só que ao rodar um comando que fará todos os testes, automaticamente, para nós.
+
+# Variáveis de ambiente
+Servem para verificar se um comando está sendo rodado em ambiente de produção ou ambiente de teste.
+
+Dentro de "Meu Computador", no windows, temos as variáveis de ambiente, como PATH. Este é um exemplo.
+
+Nós iremos utilizar a NODE_ENV.
 
 # Outras informações
 É possível usar a mesma rota em dois métodos desde que sejam métodos diferentes.
@@ -390,6 +486,19 @@ O bom de trabalhar com um ORM é que não precisamos ter tantos conhecimentos em
 * DELETE => Deletar
 * PATCH => Alteração específica
 
+Nos controllers temos as sintaxes `async`. São elas que criam os métodos de um controlador, para passar às rotas depois.
+* Cada `asyn` é um método;
+```ts
+import { Request, Response } from "express";
+//Sintaxe de async
+async nomeDoMetodo (request: Resquest, response: Response){
+    //Bloco do que o método fará
+}
+```
+
+Sobre migrations, repositórios e controladores.
+    * Para cada entidade, deve ser criada primeiro uma migration, depois repositório, que utiliza a migration, e po último um controlador, que utiliza o repositório.
+
 # RECAPITULAÇÕES
 ## Dia 1
 
@@ -401,3 +510,13 @@ O bom de trabalhar com um ORM é que não precisamos ter tantos conhecimentos em
     *Criamos as nossas duas primeiras rotas (GET e POST)
 * Aprendemos alguns métodos que podemos utilizar em nossa aplicação
 *Vimos alguns recursos para utilizar o json, o send(), vimos o que é, como é e a melhor forma de criar uma API.
+
+## Dia 2
+
+* Criamos o primeiro controller da nossa API.
+* Fizemos nossa conexão ao banco de dados.
+* Cadastramos nossos primeiros usuário.
+* Aprendemos:
+    * Alguns métodos do TypeORM;
+    * Alguns tipos de acesso ao banco de dados;
+    * O que são entidades e uma representação de banco de dados.

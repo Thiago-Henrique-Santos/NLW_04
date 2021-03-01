@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { getRepository } from 'typeorm';
-import { User } from '../models/User';
+import { getCustomRepository } from 'typeorm';
+import { UsersRepository } from '../repositories/UsersRepository';
 
 class UserController {
 
@@ -8,7 +8,12 @@ class UserController {
         const {name, email} = request.body;
         
         //Crinado uma constante para criar e manipular a tabela de usuários no BD.
-        const usersRepository = getRepository(User); //Parâmetro de getRepository() é o nome da classe modelo da tabela (entidade) do DB
+        const usersRepository = getCustomRepository(UsersRepository); //Parâmetro é o nome da classe onde estamos criando o nosso repositório personalizado.
+        //Só com essa mudança de getRepository() para getCustomRepository() vai fazer com que nosso Controller e a aplicação continuem funcionando.
+        /*
+            Antes estavamos apenas utilizando getRepository(), que acessava o mapeamento pela classe modelo, simples.
+            //Parâmetro de getRepository() é o nome da classe modelo da tabela (entidade) do DB
+        */
 
         /*O código embaixo deste comentário em SQL, seria:
             SELECT * FROM USERS WHERE EMAIL = "EMAIL"
@@ -35,8 +40,8 @@ class UserController {
         //Salvando os dados do Objeto no banco de dados
         await usersRepository.save(user); //Parâmetro de save() é o nome do objeto do tipo da Entidade
 
-        return response.json(user);
+        return response.status(201).json(user);
     }
 }
 
-export { UserController }
+export { UserController };
