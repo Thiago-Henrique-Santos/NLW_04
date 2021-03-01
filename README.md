@@ -1,3 +1,6 @@
+# NLW_04
+**Obs:** Como anotei bastante, por serem conteúdos novos para mim, acabei não tendo tempo de completar o evento. Por isso, a API, aqui, não está compelta.
+
 # O QUE É UMA API
 Uma API não é uma linguagem, nem uma biblioteca que se instala na máquina ou no aplicativo.
 API é um conjunto de , de regras, que quando definidas na aplicação, então podemos dizer que nossa aplicação é uma API.
